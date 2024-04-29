@@ -33,11 +33,29 @@ fn read_data(path: &str) -> HashMap<u64, Vec<GameEntry>>{
     }
     result
 }
+fn calculate_similarity(entry1:Vec<GameEntry>,entry2:Vec<GameEntry>) {
+    for event in entry1 {
+        for event2 in entry2 {
+            let similarity_score = 0.0;
+        }
+    }
+}
 
+//score metrics:
+    // distance formula between minutes 
+    // number of goals 
+    // every event that is the same is a boost
+    // number of subs??
 
 fn main() {
    let entries=read_data("C:/Users/pje41/Final_Project_210/soccer-data/processed_data/game_data.csv");
-    println!("{:?}",entries)
+   let mut entries_iter = entries.iter();
+   while let Some((game_id1, game_entries1)) = entries_iter.next() {
+       if let Some((game_id2, game_entries2)) = entries_iter.next() {
+        //    let similarity_score = calculate_similarity(game_entries1, game_entries2);
+        //    println!("Similarity score between game {} and game {}: {}", game_id1, game_id2, similarity_score);
+       }
+   }
     // Check one game_id against all other game_ids 
     //with each event being compared to each one and
     // an average score of the comparison being the simialrity for that event
