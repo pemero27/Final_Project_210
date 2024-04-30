@@ -30,6 +30,9 @@ fn read_data(path: &str) -> HashMap<u64, Vec<GameEntry>>{
             total_goals: u64::from_str(&events[13]).unwrap() + u64::from_str(&events[14]).unwrap()
         };
         result.entry(game_entry.game_id).or_insert(Vec::new()).push(game_entry);
+        if result.len() == 500 {
+            break
+        }
     }
     result
 }
@@ -63,26 +66,36 @@ fn calculate_similarity(entry1:Vec<GameEntry>,entry2:Vec<GameEntry>) -> f64{
     sim_average = sim_average /total;
     sim_average
 }
-fn create_edge_list() {
-    //     let mut graph_list : Vec<Vec<usize>> = vec![vec![];n];
-    // for (v,w) in edges.iter() {
-    //     graph_list[*v].push(*w);
-    //     graph_list[*w].push(*v);
-    // };
-    // for i in 0..graph_list.len() {
-    //     println!("{}: {:?}", i, graph_list[i]);
-    // };
+fn make_edge_list(entry_map:HashMap<u64,Vec<GameEntry>>) -> Vec<(f64, u64, u64)> {
+    let mut edges: Vec<(f64,u64,u64)>=vec![];
+    for (game_id1, game_entries1) in &entry_map {
+        for (game_id2, game_entries2) in &entry_map {
+            if game_id1!= game_id2 {
+                let similarity_score = calculate_similarity(game_entries1.to_vec(), game_entries2.to_vec());
+                edges.push((similarity_score, *game_id1, *game_id2));
+            }
+        }
+    }
+    edges
+}
+fn create_similarity_matrix(vertices:usize,edges:Vec<(f64,u64,u64)>) {
+    let mut graph_matrix = vec![vec![false;vertices];vertices];
+    for (similarity, game1,game2) in edges.iter() {
+        graph_matrix[*game1 as usize][*game2 as usize] = true;
+        graph_matrix[*game2 as usize][*game1 as usize] = true; 
+    };
+    for row in &graph_matrix {
+        for entry in row.iter() {
+            print!(" {} ",if *entry {"1"} else {"0"});
+        }
+        println!("");
+    };
 }
 fn main() {
    let entries=read_data("C:/Users/pje41/Final_Project_210/soccer-data/processed_data/game_data.csv");
-   let mut entries_iter = entries.iter();
-   let edges: Vec<(usize,usize,usize)>=vec![];
-   while let Some((game_id1, game_entries1)) = entries_iter.next() {
-       if let Some((game_id2, game_entries2)) = entries_iter.next() {
-           let similarity_score = calculate_similarity(game_entries1.to_vec(), game_entries2.to_vec());
-           edges.push((similarity_score,game_id1,game_id2))
-       }
-   }
+   let vertices = entries.len();
+   let edges: Vec<(f64,u64,u64)> = make_edge_list(entries);
+   create_similarity_matrix(vertices, edges)
     // Check one game_id against all other game_ids 
     //with each event being compared to each one and
     // an average score of the comparison being the simialrity for that event
