@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::BufRead;
 use std::str::FromStr;
 use std::collections::HashMap;
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 struct GameEntry {
     game_id: u64,
     minute: f64, 
@@ -33,27 +33,54 @@ fn read_data(path: &str) -> HashMap<u64, Vec<GameEntry>>{
     }
     result
 }
-fn calculate_similarity(entry1:Vec<GameEntry>,entry2:Vec<GameEntry>) {
-    for event in entry1 {
-        for event2 in entry2 {
-            let similarity_score = 0.0;
+fn calculate_similarity(entry1:Vec<GameEntry>,entry2:Vec<GameEntry>) -> f64{
+    let mut sim_average =0.0;
+    let mut total = 0.0;
+    for event in &entry1 {
+        for event2 in &entry2 {
+            total += 1.0;
+            let weights = vec![
+            (0.5, event.minute, event2.minute),
+            (1.0, event.home_club_goals as f64, event2.home_club_goals as f64),
+            (1.0, event.away_club_goals as f64, event2.away_club_goals as f64),
+            (3.0, event.total_goals as f64, event2.total_goals as f64),
+            ];
+            let mut weighted_sum = 0.0;
+            let mut weight_sum = 0.0;
+
+            for (weight, value1, value2) in weights {
+                weighted_sum += weight * (value1 - value2).abs();
+               weight_sum += weight;
+            }
+            if event.description==event2.description && event.description != "" {
+                weighted_sum -= 5.0;
+            }
+            weighted_sum += 5.0;
+            weight_sum += 5.0;
+            sim_average += weighted_sum / weight_sum;
         }
     }
+    sim_average = sim_average /total;
+    sim_average
 }
-
-//score metrics:
-    // distance formula between minutes 
-    // number of goals 
-    // every event that is the same is a boost
-    // number of subs??
-
+fn create_edge_list() {
+    //     let mut graph_list : Vec<Vec<usize>> = vec![vec![];n];
+    // for (v,w) in edges.iter() {
+    //     graph_list[*v].push(*w);
+    //     graph_list[*w].push(*v);
+    // };
+    // for i in 0..graph_list.len() {
+    //     println!("{}: {:?}", i, graph_list[i]);
+    // };
+}
 fn main() {
    let entries=read_data("C:/Users/pje41/Final_Project_210/soccer-data/processed_data/game_data.csv");
    let mut entries_iter = entries.iter();
+   let edges: Vec<(usize,usize,usize)>=vec![];
    while let Some((game_id1, game_entries1)) = entries_iter.next() {
        if let Some((game_id2, game_entries2)) = entries_iter.next() {
-        //    let similarity_score = calculate_similarity(game_entries1, game_entries2);
-        //    println!("Similarity score between game {} and game {}: {}", game_id1, game_id2, similarity_score);
+           let similarity_score = calculate_similarity(game_entries1.to_vec(), game_entries2.to_vec());
+           edges.push((similarity_score,game_id1,game_id2))
        }
    }
     // Check one game_id against all other game_ids 
