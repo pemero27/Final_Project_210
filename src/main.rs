@@ -96,7 +96,7 @@ fn create_adjaceny_list(vertices:usize,edges:Vec<(f64,u64,u64)>) {
     };
 }
 fn main() {
-   let entries=read_data("C:/Users/pje41/Final_Project_210/soccer-data/processed_data/game_data.csv");
+   let entries=read_data("C:/Users/pje41/OneDrive/Documents/GitHub/Final_Project_210/Final_Project_210/soccer-data/processed_data/game_data.csv");
    let vertices = entries.len();
    let edges: Vec<(f64,u64,u64)> = make_edge_list(entries);
    println!("{:?}",edges);
