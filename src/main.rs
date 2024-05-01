@@ -21,7 +21,6 @@ fn read_data(path: &str) -> HashMap<u64, Vec<GameEntry>>{
     for line in buf_reader {
         let line_str = line.expect("Error Reading");
         let events: Vec<String> = line_str.split(",").map(|s| s.to_string()).collect();
-        // println!("{:?},{:?}",events[1],events[0]);
         let game_entry = GameEntry {
             game_id,
             minute: f64::from_str(&events[1]).unwrap(),
@@ -32,7 +31,7 @@ fn read_data(path: &str) -> HashMap<u64, Vec<GameEntry>>{
         };
         result.entry(game_entry.game_id).or_insert(Vec::new()).push(game_entry);
         game_id += 1;
-        if result.len() == 500 {
+        if result.len() == 1000 {
             break
         }
     }
