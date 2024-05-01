@@ -1,3 +1,5 @@
+mod graph;
+use graph::Graph;
 use std::fs::File;
 use std::io::BufRead;
 use std::str::FromStr;
@@ -81,27 +83,32 @@ fn make_edge_list(entry_map:HashMap<u64,Vec<GameEntry>>) -> Vec<(f64, u64, u64)>
     }
     edges
 }
-fn create_adjaceny_list(vertices:usize,edges:Vec<(f64,u64,u64)>) {
-    let mut graph_list : Vec<Vec<usize>> = vec![vec![];vertices];
-    for (_,v,w) in edges.iter() {
-        if!graph_list[*v as usize].contains(&(*w as usize)) {
-            graph_list[*v as usize].push(*w as usize);
+fn find_most_similar_game(edges: Vec<(f64,u64,u64)>) -> (f64,u64,u64){
+    let mut min_score = 0.0;
+    let mut min_game1 = 0;
+    let mut min_game2 = 0;
+    for (score,game1,game2) in edges {
+        if score < min_score {
+            min_score = score;
+            min_game1 = game1;
+            min_game2 = game2;
         }
-        if!graph_list[*w as usize].contains(&(*v as usize)) {
-            graph_list[*w as usize].push(*v as usize);
-        }
-    };
-    for i in 0..graph_list.len() {
-        println!("{}: {:?}", i, graph_list[i]);
-    };
+    }
+    (min_score,min_game1,min_game2)
 }
 fn main() {
    let entries=read_data("C:/Users/pje41/OneDrive/Desktop/soccer-data/processed_data/game_data.csv");
-   let vertices = entries.len();
+   let mut graph= Graph::new(entries.len() as usize);
    let edges: Vec<(f64,u64,u64)> = make_edge_list(entries);
-   println!("{:?}",edges);
-   create_adjaceny_list(vertices, edges)
-    // Check one game_id againast all other game_ids 
-    //with each event being compared to each one and
-    // an average score of the comparison being the simialrity for that event
+   for (weight,v, w) in edges {
+    graph.add_edge(weight as f64,v as usize, w as usize);
+   }
+   for i in 0..graph.vertices.len() {
+    if let Some(neighbors) = graph.get_neighbors(i as u32) {
+        println!("Neighbors of vertex {}:",i as u32);
+        for &(vertex, weight) in neighbors {
+            println!("Vertex: {}, Weight: {}", vertex, weight);
+        }
+        }
+    }
 }
