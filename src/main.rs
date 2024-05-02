@@ -20,11 +20,16 @@ fn read_data(path: &str) -> HashMap<u64, Vec<GameEntry>>{
     let file = File::open(path).expect("Couldn't Open");
     let mut buf_reader = std::io::BufReader::new(file).lines();
     buf_reader.next();
+    let mut prev_game_id = 100000000;
     let mut node_id = 0;
-    let mut prev_game=100000000;
     for line in buf_reader {
         let line_str = line.expect("Error Reading");
         let events: Vec<String> = line_str.split(",").map(|s| s.to_string()).collect();
+        let game_id = u64::from_str(&events[0]).unwrap();
+        if prev_game_id != game_id { // Check if prev_game_id is not equal to current game_id
+            node_id += 1;
+        }
+        prev_game_id=game_id;
         let game_entry = GameEntry {
             node_id,
             game_id: u64::from_str(&events[0]).unwrap(),
@@ -34,12 +39,8 @@ fn read_data(path: &str) -> HashMap<u64, Vec<GameEntry>>{
             away_club_goals: u64::from_str(&events[14]).unwrap(),
             total_goals: u64::from_str(&events[13]).unwrap() + u64::from_str(&events[14]).unwrap()
         };
-        if prev_game != game_entry.game_id {
-            node_id +=1;
-        }
         result.entry(game_entry.node_id).or_insert(Vec::new()).push(game_entry.clone());
-        let prev_game = game_entry.game_id.clone();
-        if result.len() == 1000 {
+        if node_id == 1000 {
             break
         }
     }
@@ -79,9 +80,9 @@ fn make_edge_list(entry_map:&HashMap<u64,Vec<GameEntry>>) -> Vec<(f64, u64, u64)
     let mut edges: Vec<(f64,u64,u64)>=vec![];
     for (game_id1, game_entries1) in entry_map {
         for (game_id2, game_entries2) in entry_map {
-            if game_id1!= game_id2 {
-                let similarity_score = calculate_similarity(game_entries1.to_vec(), game_entries2.to_vec());
-                if similarity_score<0.5 {
+            if game_id1 < game_id2 {
+                let similarity_score = calculate_similarity(game_entries1.clone(), game_entries2.clone());
+                if similarity_score<1.0 {
                     edges.push((similarity_score, *game_id1, *game_id2));
                 }
             }
@@ -89,7 +90,7 @@ fn make_edge_list(entry_map:&HashMap<u64,Vec<GameEntry>>) -> Vec<(f64, u64, u64)
     }
     edges
 }
-fn find_most_similar_game(edges: &Vec<(f64,u64,u64)>,entries: HashMap<u64, Vec<GameEntry>>) -> (f64,Vec<GameEntry>,Vec<GameEntry>){
+fn find_most_similar_game(edges: &Vec<(f64,u64,u64)>,entries: HashMap<u64, Vec<GameEntry>>) -> (f64,&Vec<GameEntry>,&Vec<GameEntry>){
     let mut min_score = 1000.0;
     let mut min_game1:&u64 = &0;
     let mut min_game2:&u64 = &0;
@@ -100,7 +101,7 @@ fn find_most_similar_game(edges: &Vec<(f64,u64,u64)>,entries: HashMap<u64, Vec<G
             min_game2 = game2;
         }
     }
-    (min_score,entries[min_game1].clone(),entries[min_game2].clone())
+    (min_score,&entries[min_game1],&entries[min_game2])
 }
 fn main() {
    let entries=read_data("C:/Users/pje41/OneDrive/Desktop/soccer-data/processed_data/game_data.csv");
@@ -117,7 +118,6 @@ fn main() {
         }
         }
     }
-    println!("{:?}",entries);
+    println!("{:?}",graph.vertices);
     println!("{:?}",find_most_similar_game(&edges,entries));
-    
 }
