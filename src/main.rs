@@ -54,7 +54,7 @@ fn make_edge_list(entry_map:&HashMap<u64,Vec<GameEntry>>) -> Vec<(f64, u64, u64)
         for (game_id2, game_entries2) in entry_map {
             if game_id1 < game_id2 {
                 let similarity_score = similarity::calculate_similarity(game_entries1.clone(), game_entries2.clone());
-                if similarity_score>0.3 {
+                if similarity_score>0.2 {
                     edges.push((similarity_score, *game_id1, *game_id2));
                 }
             }
@@ -90,5 +90,5 @@ fn main() {
         }
         }
     }
-    println!("{:?}",graph.vertices);
+    println!("{:?}",find_most_similar_game(&edges, entries));
 }

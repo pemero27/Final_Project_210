@@ -49,6 +49,6 @@ pub fn calculate_similarity(entry1:Vec<GameEntry>,entry2:Vec<GameEntry>) -> f64{
     }
     let normalized_similarity = 1.0 / (1.0 + similarity.abs());
     let total_diff = total_home_goals_diff + total_away_goals_diff + total_goals_diff;
-    let adjusted_similarity = normalized_similarity - (total_diff * 0.01); // Adjust weight as needed
-    adjusted_similarity
+    let adjusted_similarity = normalized_similarity - (total_diff * 0.005);
+    adjusted_similarity 
 }
