@@ -13,7 +13,6 @@ impl Graph {
         self.vertices.entry(v as u32).or_insert(Vec::new()).push((w as u32, weight));
     }
     pub fn get_neighbors(&self, vertex: u32) -> Option<&Vec<(u32, f64)>> {
-        // Return the adjacency list for the given vertex if it exists
         self.vertices.get(&vertex)
     }
 }
