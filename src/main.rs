@@ -16,7 +16,6 @@ struct GameEntry {
     away_club_goals: u64,
     total_goals: u64,
 }
-
 fn read_data(path: &str) -> HashMap<u64, Vec<GameEntry>>{
     let mut result = HashMap::new();
     let file = File::open(path).expect("Couldn't Open");
@@ -54,7 +53,7 @@ fn make_edge_list(entry_map:&HashMap<u64,Vec<GameEntry>>) -> Vec<(f64, u64, u64)
         for (game_id2, game_entries2) in entry_map {
             if game_id1 < game_id2 {
                 let similarity_score = similarity::calculate_similarity(game_entries1.clone(), game_entries2.clone());
-                if similarity_score>0.2 {
+                if similarity_score>0.0 {
                     edges.push((similarity_score, *game_id1, *game_id2));
                 }
             }
@@ -62,7 +61,7 @@ fn make_edge_list(entry_map:&HashMap<u64,Vec<GameEntry>>) -> Vec<(f64, u64, u64)
     }
     edges
 }
-fn find_most_similar_game(edges: &Vec<(f64,u64,u64)>,entries: HashMap<u64, Vec<GameEntry>>) -> (f64,Vec<GameEntry>,Vec<GameEntry>){
+fn find_most_similar_game(edges: &Vec<(f64,u64,u64)>,entries: &HashMap<u64, Vec<GameEntry>>) -> (f64,Vec<GameEntry>,Vec<GameEntry>){
     let mut max_score = 0.0;
     let mut max_game1:&u64 = &0;
     let mut max_game2:&u64 = &0;
@@ -74,6 +73,18 @@ fn find_most_similar_game(edges: &Vec<(f64,u64,u64)>,entries: HashMap<u64, Vec<G
         }
     }
     (max_score,entries[max_game1].clone(),entries[max_game2].clone())
+} 
+fn find_top_similar_games(edges: &Vec<(f64,u64,u64)>, entries: &HashMap<u64, Vec<GameEntry>>) -> Vec<(f64,Vec<GameEntry>,Vec<GameEntry>)> {
+    let mut top_scores: Vec<(f64,u64,u64)> = Vec::new();
+    for (score,game1,game2) in edges {
+        top_scores.push((*score,*game1,*game2));
+    }
+    top_scores.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
+    let mut top_games: Vec<(f64,Vec<GameEntry>,Vec<GameEntry>)> = Vec::new();
+    for (score,game1,game2) in top_scores.iter().take(10) {
+        top_games.push((*score,entries[game1].clone(),entries[game2].clone()));
+    }
+    top_games
 }
 fn main() {
    let entries=read_data("C:/Users/pje41/OneDrive/Desktop/soccer-data/processed_data/game_data.csv");
@@ -82,13 +93,20 @@ fn main() {
    for (weight,v, w) in &edges {
     graph.add_edge(*weight as f64,*v as usize, *w as usize);
    }
-   for i in 0..graph.vertices.len() {
-    if let Some(neighbors) = graph.get_neighbors(i as u32) {
-        println!("Neighbors of vertex {}:",i as u32);
-        for &(vertex, weight) in neighbors {
-            println!("Vertex: {}, Weight: {}", vertex, weight);
-        }
-        }
+    let (max_score,game1,game2)=find_most_similar_game(&edges, &entries);
+    println!("The highest similarity score was: {}",max_score);
+    println!("The two games were: {:?} and {:?} \n Game 1 has the following events:",game1[0].game_id,game2[0].game_id);
+    for i in 0..game1.len() {
+        println!("{:?}",game1[i])
     }
-    println!("{:?}",find_most_similar_game(&edges, entries));
+    println!("Game 2 has the following events:");
+    for i in 0..game2.len() {
+        println!("{:?}",game2[i])
+    }
+    let top_games = find_top_similar_games(&edges, &entries);
+    println!("The top 10 games are:");
+    for (score,game1,game2) in top_games {
+        println!("The similarity score was {:?}, with their game_ids being {} and {}
+        and having a total of {} goals scored.",score,game1[0].game_id,game2[0].game_id,game1[0].total_goals)
+    }
 }
