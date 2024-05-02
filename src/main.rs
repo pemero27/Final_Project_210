@@ -1,9 +1,11 @@
 mod graph;
 use graph::Graph;
 use std::fs::File;
+use std::f64;
 use std::io::BufRead;
 use std::str::FromStr;
 use std::collections::HashMap;
+mod similarity;
 #[derive(Debug,Clone)]
 struct GameEntry {
     node_id: u64,
@@ -26,7 +28,7 @@ fn read_data(path: &str) -> HashMap<u64, Vec<GameEntry>>{
         let line_str = line.expect("Error Reading");
         let events: Vec<String> = line_str.split(",").map(|s| s.to_string()).collect();
         let game_id = u64::from_str(&events[0]).unwrap();
-        if prev_game_id != game_id { // Check if prev_game_id is not equal to current game_id
+        if prev_game_id != game_id { 
             node_id += 1;
         }
         prev_game_id=game_id;
@@ -46,43 +48,13 @@ fn read_data(path: &str) -> HashMap<u64, Vec<GameEntry>>{
     }
     result
 }
-fn calculate_similarity(entry1:Vec<GameEntry>,entry2:Vec<GameEntry>) -> f64{
-    let mut sim_average =0.0;
-    let mut total = 0.0;
-    for event in &entry1 {
-        for event2 in &entry2 {
-            total += 1.0;
-            let weights = vec![
-            (0.5, event.minute, event2.minute),
-            (1.0, event.home_club_goals as f64, event2.home_club_goals as f64),
-            (1.0, event.away_club_goals as f64, event2.away_club_goals as f64),
-            (3.0, event.total_goals as f64, event2.total_goals as f64),
-            ];
-            let mut weighted_sum = 0.0;
-            let mut weight_sum = 0.0;
-
-            for (weight, value1, value2) in weights {
-                weighted_sum += weight * (value1 - value2).abs();
-               weight_sum += weight;
-            }
-            if event.description==event2.description && event.description != "" {
-                weighted_sum -= 3.0;
-            }
-            weighted_sum += 3.0;
-            weight_sum += 3.0;
-            sim_average += weighted_sum / weight_sum;
-        }
-    }
-    sim_average = sim_average /total;
-    sim_average
-}
 fn make_edge_list(entry_map:&HashMap<u64,Vec<GameEntry>>) -> Vec<(f64, u64, u64)> {
     let mut edges: Vec<(f64,u64,u64)>=vec![];
     for (game_id1, game_entries1) in entry_map {
         for (game_id2, game_entries2) in entry_map {
             if game_id1 < game_id2 {
-                let similarity_score = calculate_similarity(game_entries1.clone(), game_entries2.clone());
-                if similarity_score<1.0 {
+                let similarity_score = similarity::calculate_similarity(game_entries1.clone(), game_entries2.clone());
+                if similarity_score>0.3 {
                     edges.push((similarity_score, *game_id1, *game_id2));
                 }
             }
@@ -90,18 +62,18 @@ fn make_edge_list(entry_map:&HashMap<u64,Vec<GameEntry>>) -> Vec<(f64, u64, u64)
     }
     edges
 }
-fn find_most_similar_game(edges: &Vec<(f64,u64,u64)>,entries: HashMap<u64, Vec<GameEntry>>) -> (f64,&Vec<GameEntry>,&Vec<GameEntry>){
-    let mut min_score = 1000.0;
-    let mut min_game1:&u64 = &0;
-    let mut min_game2:&u64 = &0;
+fn find_most_similar_game(edges: &Vec<(f64,u64,u64)>,entries: HashMap<u64, Vec<GameEntry>>) -> (f64,Vec<GameEntry>,Vec<GameEntry>){
+    let mut max_score = 0.0;
+    let mut max_game1:&u64 = &0;
+    let mut max_game2:&u64 = &0;
     for (score,game1,game2) in edges {
-        if *score < min_score {
-            min_score = *score;
-            min_game1 = game1;
-            min_game2 = game2;
+        if *score > max_score {
+            max_score = *score;
+            max_game1 = game1;
+            max_game2 = game2;
         }
     }
-    (min_score,&entries[min_game1],&entries[min_game2])
+    (max_score,entries[max_game1].clone(),entries[max_game2].clone())
 }
 fn main() {
    let entries=read_data("C:/Users/pje41/OneDrive/Desktop/soccer-data/processed_data/game_data.csv");
@@ -119,5 +91,4 @@ fn main() {
         }
     }
     println!("{:?}",graph.vertices);
-    println!("{:?}",find_most_similar_game(&edges,entries));
 }
