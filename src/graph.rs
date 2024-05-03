@@ -19,10 +19,9 @@ impl Graph {
     }
     pub fn degree_centrality(&self) -> HashMap<u32, f64> {
         let mut degree_centrality = HashMap::new();
-        let total_nodes = self.vertices.len() as f64;
         for (&node_id, neighbors) in &self.vertices {
             let degree = neighbors.len() as f64;
-            degree_centrality.insert(node_id, degree / total_nodes);
+            degree_centrality.insert(node_id, degree-1.0);
         }
         degree_centrality
     }

@@ -6,6 +6,7 @@ use std::io::BufRead;
 use std::str::FromStr;
 mod similarity;
 use std::collections::HashMap;
+mod tests;
 #[derive(Debug,Clone)]
 struct GameEntry {
     node_id: u64,
@@ -16,7 +17,7 @@ struct GameEntry {
     away_club_goals: u64,
     total_goals: u64,
 }
-fn read_data(path: &str) -> HashMap<u64, Vec<GameEntry>>{
+fn read_data(path: &str) -> HashMap<u64, Vec<GameEntry>> {
     let mut result = HashMap::new();
     let file = File::open(path).expect("Couldn't Open");
     let mut buf_reader = std::io::BufReader::new(file).lines();
@@ -41,7 +42,7 @@ fn read_data(path: &str) -> HashMap<u64, Vec<GameEntry>>{
             total_goals: u64::from_str(&events[13]).unwrap() + u64::from_str(&events[14]).unwrap()
         };
         result.entry(game_entry.node_id).or_insert(Vec::new()).push(game_entry.clone());
-        if node_id == 1000 {
+        if node_id == 1000{
             break
         }
     }
@@ -115,7 +116,7 @@ fn max_closeness_centrality(graph:&Graph) -> (u32,f64){
     return (max_close_centrality_node,max_close_centrality)
 }
 fn main() {
-   let entries=read_data("C:/Users/pje41/OneDrive/Desktop/soccer-data/processed_data/game_data2.csv");
+   let entries =read_data("C:/Users/pje41/OneDrive/Desktop/soccer-data/processed_data/game_data2.csv");
    let mut overall_graph= Graph::new(entries.len() as usize);
    let mut filtered_graph= Graph::new(entries.len() as usize);
    let (overall_edges,filtered_edges) = make_edge_list(&entries);
@@ -141,7 +142,7 @@ fn main() {
         println!(" \n The similarity score was {:?}, with their game_ids being {} and {} and having a total of {} goals scored.",score,game1[0].game_id,game2[0].game_id,game1[0].total_goals)
     }
     let (max_node_degree,max_centrality)=max_degree_centrality(&filtered_graph);
-    println!(" \n The node with the highest degree centrality is {} with a centrality of {}. The assocaited game id is {} \n This game has the following events:",max_node_degree,max_centrality,entries[&(max_node_degree as u64)][0].game_id);
+    println!(" \n The node with the highest degree centrality is node {} with a degree of {}. The assocaited game id is {} \n This game has the following events:",max_node_degree,max_centrality,entries[&(max_node_degree as u64)][0].game_id);
     for i in 0..entries[&(max_node_degree as u64)].len() {
         println!("{:?}",entries[&(max_node_degree as u64)][i]);
     }
