@@ -53,7 +53,7 @@ fn make_edge_list(entry_map:&HashMap<u64,Vec<GameEntry>>) -> Vec<(f64, u64, u64)
         for (game_id2, game_entries2) in entry_map {
             if game_id1 < game_id2 {
                 let similarity_score = similarity::calculate_similarity(game_entries1.clone(), game_entries2.clone());
-                if similarity_score>0.75 {
+                if similarity_score>0.0 {
                     edges.push((similarity_score, *game_id1, *game_id2));
                 }
             }
@@ -86,7 +86,7 @@ fn find_top_similar_games(edges: &Vec<(f64,u64,u64)>, entries: &HashMap<u64, Vec
     }
     top_games
 }
-fn max_degree_centrality(graph:Graph) -> (u32,f64){
+fn max_degree_centrality(graph:&Graph) -> (u32,f64){
     let mut max_degree_centrality = 0.0;
     let mut max_degree_centrality_node = 0;
     let degree_centralities=graph.degree_centrality();
@@ -97,6 +97,18 @@ fn max_degree_centrality(graph:Graph) -> (u32,f64){
         }
     }
     return (max_degree_centrality_node,max_degree_centrality)
+}
+fn max_closeness_centrality(graph:&Graph) -> (u32,f64){
+    let mut max_close_centrality = 0.0;
+    let mut max_close_centrality_node = 0;
+    let closeness_centralities=graph.closeness_centrality();
+    for closeness_centrality in closeness_centralities.keys() { 
+        if closeness_centralities[closeness_centrality] > max_close_centrality {
+            max_close_centrality = closeness_centralities[closeness_centrality];
+            max_close_centrality_node = *closeness_centrality;
+        }
+    }
+    return (max_close_centrality_node,max_close_centrality)
 }
 fn main() {
    let entries=read_data("C:/Users/pje41/OneDrive/Desktop/soccer-data/processed_data/game_data.csv");
@@ -120,6 +132,9 @@ fn main() {
     for (score,game1,game2) in top_games {
         println!("The similarity score was {:?}, with their game_ids being {} and {} and having a total of {} goals scored.",score,game1[0].game_id,game2[0].game_id,game1[0].total_goals)
     }
-    let (max_node,max_centrality)=max_degree_centrality(graph);
-    println!("The node with the highest degree centrality is {} with a centrality of {}. The assocaited game id is {}",max_node,max_centrality,entries[&(max_node as u64)][0].game_id)
+    let (max_node_degree,max_centrality)=max_degree_centrality(&graph);
+    println!("The node with the highest degree centrality is {} with a centrality of {}. The assocaited game id is {}",max_node_degree,max_centrality,entries[&(max_node_degree as u64)][0].game_id);
+    let (max_node_close,max_close)=max_closeness_centrality(&graph);
+    println!("The node with the highest closeness centrality is {} with a centrality of {}. The assocaited game id is {}",max_node_close,max_close,entries[&(max_node_close as u64)][0].game_id);
+    
 }
