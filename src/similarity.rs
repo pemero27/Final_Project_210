@@ -33,7 +33,7 @@ pub fn calculate_similarity(entry1:Vec<GameEntry>,entry2:Vec<GameEntry>) -> f64{
                 }
                 weight_sum += *weight;
             }
-            if event.description == event2.description && event.description != "" {
+            if event.description == event2.description && event.description != "Substitution" {
                 multiplier+=0.25;
             }
             sim_sum += weighted_sum;

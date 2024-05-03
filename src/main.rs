@@ -115,7 +115,7 @@ fn max_closeness_centrality(graph:&Graph) -> (u32,f64){
     return (max_close_centrality_node,max_close_centrality)
 }
 fn main() {
-   let entries=read_data("C:/Users/pje41/OneDrive/Desktop/soccer-data/processed_data/game_data.csv");
+   let entries=read_data("C:/Users/pje41/OneDrive/Desktop/soccer-data/processed_data/game_data2.csv");
    let mut overall_graph= Graph::new(entries.len() as usize);
    let mut filtered_graph= Graph::new(entries.len() as usize);
    let (overall_edges,filtered_edges) = make_edge_list(&entries);
