@@ -20,11 +20,7 @@ pub fn calculate_similarity(entry1:Vec<GameEntry>,entry2:Vec<GameEntry>) -> f64{
             let mut weighted_sum = 0.0;
             for (weight, value1, value2) in &weights {
                 if *weight == 3.0 && !total_goals_checked {
-                    if event.total_goals == 0 && event2.total_goals == 0 {
-                        weighted_sum += 200.0; // Penalty for 0-0 games
-                    } else {
-                        total_goals_diff += (*value1 - *value2).abs();
-                    }
+                    total_goals_diff += (*value1 - *value2).abs();
                     total_goals_checked = true;
                 } else if *weight == 1.0 && !home_goals_checked {
                     total_home_goals_diff += (*value1 - *value2).abs();
@@ -38,14 +34,17 @@ pub fn calculate_similarity(entry1:Vec<GameEntry>,entry2:Vec<GameEntry>) -> f64{
                 weight_sum += *weight;
             }
             if event.description == event2.description && event.description != "" {
-                multiplier+=4.0;
+                multiplier+=0.25;
             }
             sim_sum += weighted_sum;
         }
     }
-    let similarity = sim_sum / weight_sum;
+    let mut similarity = sim_sum / weight_sum;
     if multiplier != 0.0 {
-        let similarity = 2.5 * (similarity*similarity).log10();
+        similarity = multiplier * (similarity*similarity).log10();
+    }
+    else {
+        similarity = similarity.log10()* 3.0;
     }
     let normalized_similarity = 1.0 / (1.0 + similarity.abs());
     let total_diff = total_home_goals_diff + total_away_goals_diff + total_goals_diff;
