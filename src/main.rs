@@ -48,7 +48,7 @@ fn read_data(path: &str) -> HashMap<u64, Vec<GameEntry>> {
     }
     result
 }
-fn make_edge_list(entry_map:&HashMap<u64,Vec<GameEntry>>) -> (Vec<(f64, u64, u64)>,Vec<(f64, u64, u64)>) {
+fn make_edge_list(entry_map:&HashMap<u64,Vec<GameEntry>>) -> Vec<(f64, u64, u64)> {
     let mut overall_edges: Vec<(f64,u64,u64)>=vec![];
     let mut filtered_edges: Vec<(f64,u64,u64)>=vec![];
     for (game_id1, game_entries1) in entry_map {
@@ -58,13 +58,10 @@ fn make_edge_list(entry_map:&HashMap<u64,Vec<GameEntry>>) -> (Vec<(f64, u64, u64
                 if similarity_score>0.75 {
                     filtered_edges.push((similarity_score, *game_id1, *game_id2));
                 }
-                if similarity_score>0.0 {
-                    overall_edges.push((similarity_score, *game_id1, *game_id2));
-                }
             }
         }
     }
-    (overall_edges,filtered_edges)
+    filtered_edges
 }
 fn find_most_similar_game(edges: &Vec<(f64,u64,u64)>,entries: &HashMap<u64, Vec<GameEntry>>) -> (f64,Vec<GameEntry>,Vec<GameEntry>){
     let mut max_score = 0.0;
@@ -117,16 +114,12 @@ fn max_closeness_centrality(graph:&Graph) -> (u32,f64){
 }
 fn main() {
    let entries =read_data("C:/Users/pje41/OneDrive/Desktop/soccer-data/processed_data/game_data2.csv");
-   let mut overall_graph= Graph::new(entries.len() as usize);
    let mut filtered_graph= Graph::new(entries.len() as usize);
-   let (overall_edges,filtered_edges) = make_edge_list(&entries);
-   for (weight,v, w) in &filtered_edges {
+   let edges = make_edge_list(&entries);
+   for (weight,v, w) in &edges {
     filtered_graph.add_edge(*weight as f64,*v as usize, *w as usize);
    }
-   for (weight,v, w) in &overall_edges {
-    overall_graph.add_edge(*weight as f64,*v as usize, *w as usize);
-   }
-    let (max_score,game1,game2)=find_most_similar_game(&filtered_edges, &entries);
+    let (max_score,game1,game2)=find_most_similar_game(&edges, &entries);
     println!("The highest similarity score was: {} \n",max_score);
     println!("The two games were: {:?} and {:?} \n Game 1 has the following events: \n ",game1[0].game_id,game2[0].game_id);
     for i in 0..game1.len() {
@@ -136,7 +129,7 @@ fn main() {
     for i in 0..game2.len() {
         println!("{:?}",game2[i])
     }
-    let top_games = find_top_similar_games(&filtered_edges, &entries);
+    let top_games = find_top_similar_games(&edges, &entries);
     println!("\n The top 10 games are:");
     for (score,game1,game2) in top_games {
         println!(" \n The similarity score was {:?}, with their game_ids being {} and {} and having a total of {} goals scored.",score,game1[0].game_id,game2[0].game_id,game1[0].total_goals)
@@ -146,7 +139,7 @@ fn main() {
     for i in 0..entries[&(max_node_degree as u64)].len() {
         println!("{:?}",entries[&(max_node_degree as u64)][i]);
     }
-    let (max_node_close,max_close)=max_closeness_centrality(&overall_graph);
+    let (max_node_close,max_close)=max_closeness_centrality(&filtered_graph);
     println!("\n The node with the highest closeness centrality is {} with a centrality of {}. The assocaited game id is {} \n This game has the following events:",max_node_close,max_close,entries[&(max_node_close as u64)][0].game_id);
     for i in 0..entries[&(max_node_close as u64)].len() {
         println!("{:?}",entries[&(max_node_close as u64)][i]);
